@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Деталі — MovieApp</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+    
+    <main class="details-wrapper">
+        <a href="javascript:history.back()" class="back-link">← Назад</a>
+        
+        <div id="details-content" class="details-card">
+            <div class="loader">Завантаження інформації...</div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+    <script>
+        window.onload = () => {
+            fetch("header.html")
+                .then(res => res.text())
+                .then(data => document.getElementById("header-placeholder").innerHTML = data);
+            
+            loadMovieDetails();
+        };
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>

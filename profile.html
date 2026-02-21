@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Мій Профіль</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+    <script>
+        fetch("header.html").then(res => res.text()).then(data => {
+            document.getElementById("header-placeholder").innerHTML = data;
+        });
+    </script>
+
+    <div class="details-wrapper">
+        <button onclick="window.location.href='index.html'" class="btn-back">← На головну</button>
+        <h1>Мої збережені фільми та серіали</h1>
+        <div id="favorite-movies" class="movies-container">
+            </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

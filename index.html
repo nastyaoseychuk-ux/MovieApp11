@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MovieApp — Головна</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Додаткові стилі для описів секцій, якщо їх ще немає в style.css */
+        .section-description {
+            color: #bbb;
+            font-size: 0.95rem;
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-left: 4px solid #ff4d4d;
+            padding-left: 15px;
+        }
+        .movies-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="header-placeholder"></div>
+
+    <script>
+        // Динамічне завантаження хедера
+        fetch("header.html")
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById("header-placeholder").innerHTML = data;
+            })
+            .catch(err => console.error("Помилка завантаження меню:", err));
+    </script>
+
+    <main class="main-content">
+        <div class="conteiner1">
+            <div class="mainText">
+                <h1>Ласкаво просимо до MovieApp!</h1>
+                <p>
+                    MovieApp — це ваша персональна бібліотека кіно. Ми збираємо актуальну інформацію про новинки прокату, 
+                    найрейтинговіші серіали та культові фільми, щоб ви завжди знали, що подивитися ввечері.
+                </p>
+            </div>
+            <img class="imges" src="log.png" alt="логотип MovieApp">
+        </div>
+
+        <section class="home-section">
+            <div class="section-header">
+                <div class="header-text">
+                    <h2 class="section-title">Золота колекція: Топ фільмів</h2>
+                    <p class="section-description">Найкращі стрічки за всю історію кінематографа, що отримали найвищі оцінки від глядачів по всьому світу.</p>
+                </div>
+                <a href="catalog.html?type=movie&top=1" class="btn-more">Дивитися всі</a>
+            </div>
+            <div id="top-movies-home" class="movies-container"></div> 
+        </section>
+
+        <section class="home-section">
+            <div class="section-header">
+                <div class="header-text">
+                    <h2 class="section-title">Гарячі новинки серіалів</h2>
+                    <p class="section-description">Найсвіжіші прем'єри та продовження улюблених шоу, що вийшли на екрани у 2025-2026 роках.</p>
+                </div>
+                <a href="catalog.html?type=tv&new=1" class="btn-more">Більше новинок</a>
+            </div>
+            <div id="new-tv-home" class="movies-container"></div>
+        </section>
+    </main>
+    <div id="authModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <div id="authForms">
+            <div id="loginForm">
+                <h2>Вхід</h2>
+                <input type="email" id="loginEmail" placeholder="Email" required>
+                <input type="password" id="loginPass" placeholder="Пароль" required>
+                <button class="btn-details" onclick="handleLogin()">Увійти</button>
+                <p>Немає акаунту? <a href="#" onclick="toggleAuth('reg')">Зареєструватися</a></p>
+            </div>
+            <div id="regForm" style="display: none;">
+                <h2>Реєстрація</h2>
+                <input type="text" id="regName" placeholder="Ім'я" required>
+                <input type="email" id="regEmail" placeholder="Email" required>
+                <input type="password" id="regPass" placeholder="Пароль" required>
+                <button class="btn-details" onclick="handleRegister()">Створити акаунт</button>
+                <p>Вже є акаунт? <a href="#" onclick="toggleAuth('login')">Увійти</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+    <script src="script.js"></script>
+
+</body>
+</html>
