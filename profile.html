@@ -4,19 +4,33 @@
     <meta charset="UTF-8">
     <title>Мій Профіль</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div id="header-placeholder"></div>
     <script>
-        fetch("header.html").then(res => res.text()).then(data => {
-            document.getElementById("header-placeholder").innerHTML = data;
-        });
+        // Динамічне завантаження хедера (один виклик)
+        fetch("header.html")
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById("header-placeholder").innerHTML = data;
+            })
+            .catch(err => console.error("Помилка завантаження меню:", err));
     </script>
 
     <div class="details-wrapper">
-        <button onclick="window.location.href='index.html'" class="btn-back">← На головну</button>
-        <h1>Мої збережені фільми та серіали</h1>
-        <div id="favorite-movies" class="movies-container">
+        <div id="favorites-tabs" class="profile-tabs" style="margin:20px 0; display:flex; gap:30px;">
+            <div class="tab">
+                <button id="fav-movies-btn" class="btn">Мої збережені фільми</button>
+            </div>
+            <div class="tab">
+                <button id="fav-tv-btn" class="btn">Мої збережені серіали</button>
+            </div>
+            <div class="tab">
+                <button id="fav-cartoons-btn" class="btn">Мої збережені мультфільми</button>
+            </div>
+        </div>
+        <div id="favorite-movies" class="movies-container1">
             </div>
     </div>
 

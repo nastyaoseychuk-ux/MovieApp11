@@ -4,14 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Деталі — MovieApp</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="header-placeholder"></div>
-    
+
     <main class="details-wrapper">
-        <a href="javascript:history.back()" class="back-link">← Назад</a>
-        
         <div id="details-content" class="details-card">
             <div class="loader">Завантаження інформації...</div>
         </div>
@@ -19,14 +18,20 @@
 
     <script src="script.js"></script>
     <script>
-        window.onload = () => {
+        document.addEventListener('DOMContentLoaded', () => {
+            // Динамічне завантаження хедера
             fetch("header.html")
                 .then(res => res.text())
-                .then(data => document.getElementById("header-placeholder").innerHTML = data);
+                .then(data => {
+                    document.getElementById("header-placeholder").innerHTML = data;
+                    // Синхронізація auth UI після завантаження хедера
+                    initHeaderObserver();
+                })
+                .catch(err => console.error("Помилка завантаження меню:", err));
             
+            // Завантажити деталі фільму
             loadMovieDetails();
-        };
+        });
     </script>
-    <script src="script.js"></script>
 </body>
 </html>
