@@ -486,7 +486,53 @@ searchInput?.addEventListener("keypress", (e) => {
     if (e.key === "Enter") performSearch();
 });
 
+function createFloatingBean() {
+  const bean = document.createElement("div")
+  bean.textContent = "🎥"
+  bean.style.position = "fixed"
+  bean.style.fontSize = Math.random() * 20 + 20 + "px"
+  bean.style.left = Math.random() * 100 + "%"
+  bean.style.top = "100%"
+  bean.style.opacity = "0.1"
+  bean.style.pointerEvents = "none"
+  bean.style.zIndex = "0"
+  bean.style.transition = "all 10s linear"
 
+  document.body.appendChild(bean)
+
+  setTimeout(() => {
+    bean.style.top = "-100px"
+    bean.style.transform = `rotate(${Math.random() * 360}deg)`
+  }, 100)
+
+  setTimeout(() => {
+    bean.remove()
+  }, 10000)
+}
+
+function createFloatingBean1() {
+  const bean = document.createElement("div")
+  bean.textContent = "🎬"
+  bean.style.position = "fixed"
+  bean.style.fontSize = Math.random() * 20 + 20 + "px"
+  bean.style.left = Math.random() * 100 + "%"
+  bean.style.top = "100%"
+  bean.style.opacity = "0.1"
+  bean.style.pointerEvents = "none"
+  bean.style.zIndex = "0"
+  bean.style.transition = "all 10s linear"
+
+  document.body.appendChild(bean)
+
+  setTimeout(() => {
+    bean.style.top = "-100px"
+    bean.style.transform = `rotate(${Math.random() * 360}deg)`
+  }, 100)
+
+  setTimeout(() => {
+    bean.remove()
+  }, 10000)
+}
 
 window.addEventListener('DOMContentLoaded', () => {
     initHeaderObserver();
@@ -496,6 +542,8 @@ window.addEventListener('DOMContentLoaded', () => {
     loadTrendingNow();
     loadCatalog();
     loadMovieDetails();
-    loadProfile(); 
+    loadProfile();
+    setInterval(createFloatingBean, 2000);
+    setInterval(createFloatingBean1, 2000);
 });
 
