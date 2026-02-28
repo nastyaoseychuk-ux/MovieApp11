@@ -99,7 +99,7 @@ async function fetchData(path) {
     }
 }
 
-function createCard(item, type) {
+function createCard(item, type, removable = false) {
     const title = item.title || item.name;
     // Support both API items (with poster_path) and saved favorites (with full poster URL in `poster`)
     const poster = item.poster_path
@@ -109,6 +109,10 @@ function createCard(item, type) {
     const rating = item.vote_average ? item.vote_average.toFixed(1) : 'N/A';
 
     const encoded = encodeURIComponent(JSON.stringify({ id: item.id, title, poster, type: itemType, genre_ids: item.genre_ids || item.genre_ids || [] }));
+    // If this card is rendered in profile and marked removable, show a remove button instead of add
+    const actionHtml = removable
+        ? `<button class="btn" onclick="removeFromFavorites('${item.id}','${itemType}')">Видалити</button>`
+        : `<button onclick="addToFavorites('${encoded}')" class="btn-fav">♥</button>`;
 
     return `
         <div class="movie-card fade-in-element">
@@ -116,9 +120,9 @@ function createCard(item, type) {
             <div class="movie-card-info">
                 <h3>${title}</h3>
                 <div class="rating">★ ${rating}</div>
-                <div style="display: flex; gap: 5px; margin-top: 10px;">
+                <div style="display: flex; gap: 8px; margin-top: 10px;">
                     <a href="details.html?id=${item.id}&type=${itemType}" class="btn-details">Детальніше</a>
-                    <button onclick="addToFavorites('${encoded}')" class="btn-fav">♥</button>
+                    ${actionHtml}
                 </div>
             </div>
         </div>`;
@@ -252,6 +256,25 @@ window.addToFavorites = function(encodedItem) {
     }
 };
 
+window.removeFromFavorites = function(id, type) {
+    const user = localStorage.getItem("currentUser");
+    if (!user) {
+        alert("Увійдіть в акаунт!");
+        return;
+    }
+    try {
+        let favs = JSON.parse(localStorage.getItem(`fav_${user}`)) || [];
+        const filtered = favs.filter(f => !(String(f.id) === String(id) && f.type === type));
+        localStorage.setItem(`fav_${user}`, JSON.stringify(filtered));
+        alert('Видалено з обраного');
+        // перерендеримо профіль
+        try { loadProfile(); } catch (e) {}
+    } catch (e) {
+        console.error('removeFromFavorites error', e);
+        alert('Не вдалося видалити з обраного');
+    }
+};
+
 function performSearch() {
     const input = document.getElementById("searchInput");
     if (input && input.value.trim()) {
@@ -337,12 +360,17 @@ async function loadCatalog() {
     const g = params.get("genre");
     const type = params.get("type") || "movie"; 
     const sort = params.get("sort"); // Додано обробку параметра sort
+    const topParam = params.get('top');
+    const newParam = params.get('new');
 
     let path = "";
 
     if (q) {
         // Пошук
         path = `/search/multi?query=${encodeURIComponent(q)}`;
+    } else if (g && topParam === '1') {
+        // Жанр + Топ-10: сортуємо за рейтингом
+        path = `/discover/${type}?with_genres=${g}&sort_by=vote_average.desc`;
     } else if (g) {
         // За жанром (і "Всі мультфільми", оскільки вони використовують genre=16)
         path = `/discover/${type}?with_genres=${g}`;
@@ -350,9 +378,15 @@ async function loadCatalog() {
         // Топ-10 (найрейтинговіші)
         path = `/${type}/top_rated?page=1`;
     } else if (sort === 'new') {
-        // Новинки (відсортовані за датою релізу)
+        // Новинки — обмежимо діапазон 2025-01-01..2026-12-31 і сортуємо за датою
         const dateField = type === 'movie' ? 'primary_release_date' : 'first_air_date';
-        path = `/discover/${type}?sort_by=${dateField}.desc`;
+        path = `/discover/${type}?sort_by=${dateField}.desc&${dateField}.gte=2025-01-01&${dateField}.lte=2026-12-31`;
+    } else if (topParam === '1') {
+        // Підтримка параметра top=1 (без жанру)
+        path = `/${type}/top_rated?page=1`;
+    } else if (newParam === '1') {
+        const dateField = type === 'movie' ? 'primary_release_date' : 'first_air_date';
+        path = `/discover/${type}?sort_by=${dateField}.desc&${dateField}.gte=2025-01-01&${dateField}.lte=2026-12-31`;
     } else {
         // Кнопка "Всі" (за замовчуванням завантажує популярні)
         path = `/${type}/popular?page=1`;
@@ -360,12 +394,17 @@ async function loadCatalog() {
 
     const data = await fetchData(path);
     
-    if (data.results && data.results.length > 0) {
-        cont.innerHTML = data.results.map(i => createCard(i, i.media_type || type)).join('');
+    const results = (data.results || []);
+    // Якщо запитали Top-10 (через sort=top або top=1), обмежимо до 10
+    const isTopRequest = sort === 'top' || topParam === '1' || (g && params.get('top') === '1');
+    const shown = isTopRequest ? results.slice(0, 10) : results;
+
+    if (shown.length > 0) {
+        cont.innerHTML = shown.map(i => createCard(i, i.media_type || type)).join('');
     } else {
         cont.innerHTML = "<h2 style='color: white;'>Нічого не знайдено</h2>";
     }
-    
+
     observeElements();
 }
 
@@ -374,10 +413,15 @@ async function loadMovieDetails() {
     if (!cont) return;
     const p = new URLSearchParams(window.location.search);
     const d = await fetchData(`/${p.get('type') || 'movie'}/${p.get('id')}`);
-    
+    if (d.poster_path){
+        poster = `https://image.tmdb.org/t/p/w500${d.poster_path}`;
+    } else {
+       poster = 'img/No-Image-Placeholder.svg.png'
+    }
     cont.innerHTML = `
         <div class="details-wrapper" style="display:flex; gap:30px; padding:40px; flex-wrap:wrap; color: white;">
-            <img src="https://image.tmdb.org/t/p/w500${d.poster_path}" style="border-radius:15px; width:350px;">
+
+            <img src="${poster}" style="border-radius:15px; width:350px;">
             <div style="flex:1; min-width:300px;">
                 <h1 style="color: white;">${d.title || d.name}</h1>
                 <p style="font-size:1.1rem; margin:20px 0;">${d.overview || "Опис відсутній."}</p>
@@ -533,6 +577,7 @@ function createFloatingBean1() {
     bean.remove()
   }, 10000)
 }
+
 
 window.addEventListener('DOMContentLoaded', () => {
     initHeaderObserver();
