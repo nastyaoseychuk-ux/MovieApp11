@@ -59,21 +59,21 @@
     <div class="modal-content">
         <span class="close-modal">&times;</span>
         <div id="authForms">
-            <div id="loginForm">
+            <form id="loginForm" onsubmit="handleLogin(event)" >
                 <h2>Вхід</h2>
-                <input type="email" id="loginEmail" placeholder="Email" required>
-                <input type="password" id="loginPass" placeholder="Пароль" required>
-                <button class="btn-details" onclick="handleLogin()">Увійти</button>
+                <input required type="email" id="loginEmail" placeholder="Email" required>
+                <input required type="password" id="loginPass" placeholder="Пароль" required>
+                <button class="btn-details">Увійти</button>
                 <p>Немає акаунту? <a href="#" onclick="toggleAuth('reg')">Зареєструватися</a></p>
-            </div>
-            <div id="regForm" style="display: none;">
+            </form>
+            <form id="regForm" style="display: none;" onsubmit="handleRegister(event)" >
                 <h2>Реєстрація</h2>
-                <input type="text" id="regName" placeholder="Ім'я" required>
-                <input type="email" id="regEmail" placeholder="Email" required>
-                <input type="password" id="regPass" placeholder="Пароль" required>
-                <button class="btn-details" onclick="handleRegister()">Створити акаунт</button>
+                <input required type="text" id="regName" placeholder="Ім'я" required>
+                <input required type="email" id="regEmail" placeholder="Email" required>
+                <input required type="password" id="regPass" placeholder="Пароль" required>
+                <button  class="btn-details">Створити акаунт</button>
                 <p>Вже є акаунт? <a href="#" onclick="toggleAuth('login')">Увійти</a></p>
-            </div>
+            </form>
         </div>
     </div>
 </div>

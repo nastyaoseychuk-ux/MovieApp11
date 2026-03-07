@@ -29,6 +29,28 @@
         <div id="movies" class="movies-container2"></div>
     </main>
 
+    <div id="authModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <div id="authForms">
+            <div id="loginForm">
+                <h2>Вхід</h2>
+                <input type="email" id="loginEmail" placeholder="Email" required>
+                <input type="password" id="loginPass" placeholder="Пароль" required>
+                <button class="btn-details" onclick="handleLogin()">Увійти</button>
+                <p>Немає акаунту? <a href="#" onclick="toggleAuth('reg')">Зареєструватися</a></p>
+            </div>
+            <div id="regForm" style="display: none;">
+                <h2>Реєстрація</h2>
+                <input type="text" id="regName" placeholder="Ім'я" required>
+                <input type="email" id="regEmail" placeholder="Email" required>
+                <input type="password" id="regPass" placeholder="Пароль" required>
+                <button class="btn-details" onclick="handleRegister()">Створити акаунт</button>
+                <p>Вже є акаунт? <a href="#" onclick="toggleAuth('login')">Увійти</a></p>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>

@@ -1,5 +1,7 @@
 const API_KEY = "fa007b99eca4a9e5db0525b1646d0243";
 
+window.addEventListener('DOMContentLoaded', () => {
+    
 // Intersection Observer для плавної появи при прокручуванні
 const observerOptions = {
     threshold: 0.1,
@@ -104,7 +106,7 @@ function createCard(item, type, removable = false) {
     // Support both API items (with poster_path) and saved favorites (with full poster URL in `poster`)
     const poster = item.poster_path
         ? `https://image.tmdb.org/t/p/w300${item.poster_path}`
-        : (item.poster ? item.poster : 'https://via.placeholder.com/300x450?text=No+Image');
+        : (item.poster ? item.poster : 'img/placeholder-1125x1500-3x4.gif');
     const itemType = type || (item.title ? 'movie' : 'tv');
     const rating = item.vote_average ? item.vote_average.toFixed(1) : 'N/A';
 
@@ -181,14 +183,14 @@ window.handleLogin = function(e) {
     const userData = localStorage.getItem(`user_${email}`);
     
     if (!userData) {
-        alert("Користувача не знайдено!");
+        
         return;
     }
 
     const user = JSON.parse(userData);
 
     if (user.pass !== pass) {
-        alert("Невірний пароль!");
+        
         return;
     }
 
@@ -416,7 +418,7 @@ async function loadMovieDetails() {
     if (d.poster_path){
         poster = `https://image.tmdb.org/t/p/w500${d.poster_path}`;
     } else {
-       poster = 'img/No-Image-Placeholder.svg.png'
+       poster = 'img/placeholder-1125x1500-3x4.gif'
     }
     cont.innerHTML = `
         <div class="details-wrapper" style="display:flex; gap:30px; padding:40px; flex-wrap:wrap; color: white;">
@@ -579,16 +581,17 @@ function createFloatingBean1() {
 }
 
 
-window.addEventListener('DOMContentLoaded', () => {
-    initHeaderObserver();
-    updateAuthUI();
-    renderBackButton();
-    loadHome();
-    loadTrendingNow();
-    loadCatalog();
-    loadMovieDetails();
-    loadProfile();
-    setInterval(createFloatingBean, 2000);
-    setInterval(createFloatingBean1, 2000);
+
+initHeaderObserver();
+updateAuthUI();
+renderBackButton();
+loadHome();
+loadTrendingNow();
+loadCatalog();
+loadMovieDetails();
+loadProfile();
+setInterval(createFloatingBean, 2000);
+setInterval(createFloatingBean1, 2000);
+
 });
 
