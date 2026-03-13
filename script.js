@@ -1,120 +1,350 @@
 const API_KEY = "fa007b99eca4a9e5db0525b1646d0243";
 
-window.addEventListener('DOMContentLoaded', () => {
-    
-// Intersection Observer для плавної появи при прокручуванні
-const observerOptions = {
+window.addEventListener("DOMContentLoaded", () => {
+  // --- Твій оригінальний Intersection Observer (залишаємо без змін) ---
+  const observerOptions = {
     threshold: 0.1,
-    rootMargin: '0px 0px -50px 0px'
-};
+    rootMargin: "0px 0px -50px 0px",
+  };
 
-const observer = new IntersectionObserver((entries) => {
+  const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry, index) => {
-        if (!entry.isIntersecting) return;
+      if (!entry.isIntersecting) return;
+      const isText = entry.target.classList.contains("fade-in-text");
+      const baseDelay = isText ? 15 : 80;
+      setTimeout(() => {
+        entry.target.classList.add("visible");
+      }, index * baseDelay);
+      observer.unobserve(entry.target);
 
-        const isText = entry.target.classList.contains('fade-in-text');
-        const baseDelay = isText ? 15 : 80; // швидший інтервал для тексту
+      if (isText) {
+        const container = entry.target.closest("section, main, .movies-container, .details-wrapper");
+        const scope = container || document;
+        const cards = Array.from(scope.querySelectorAll(".fade-in-element")).filter(
+          (el) => !el.classList.contains("visible") && el !== entry.target,
+        );
+        cards.forEach((card, i) => {
+          setTimeout(() => {
+            card.classList.add("visible");
+            try { observer.unobserve(card); } catch (e) {}
+          }, i * 60 + 30);
+        });
+      }
+    });
+  }, observerOptions);
 
-        // Додаємо видимість для самого елементу
-        setTimeout(() => {
-            entry.target.classList.add('visible');
-        }, index * baseDelay);
-        observer.unobserve(entry.target);
+  function observeElements() {
+    document.querySelectorAll(".fade-in-element").forEach((el) => {
+      observer.observe(el);
+    });
+  }
 
-        // Якщо це текст, одночасно запустимо появу карточок у тій самій секції
-        if (isText) {
-            // шукаємо найближчу секцію або контейнер
-            const container = entry.target.closest('section, main, .movies-container, .details-wrapper');
-            const scope = container || document;
-            const cards = Array.from(scope.querySelectorAll('.fade-in-element'))
-                .filter(el => !el.classList.contains('visible') && el !== entry.target);
+  function markTextForFade() {
+    const selectors = [".header-text", ".mainText", ".section-title", ".section-description", "h1", "h2", "h3", "p"];
+    document.querySelectorAll(selectors.join(",")).forEach((el) => {
+      if (!el.classList.contains("fade-in-element")) el.classList.add("fade-in-element");
+      if (!el.classList.contains("fade-in-text")) el.classList.add("fade-in-text");
+    });
+  }
 
-            cards.forEach((card, i) => {
-                setTimeout(() => {
-                    card.classList.add('visible');
-                    try { observer.unobserve(card); } catch(e){}
-                }, i * 60 + 30);
-            });
+  markTextForFade();
+  observeElements();
+
+  // --- Твоя логіка API та функцій (залишаємо) ---
+  async function fetchData(path) {
+    try {
+      const separator = path.includes("?") ? "&" : "?";
+      const url = path.startsWith("http")
+        ? path
+        : `https://api.themoviedb.org/3${path}${separator}api_key=${API_KEY}&language=uk-UA`;
+      const res = await fetch(url);
+      return await res.json();
+    } catch (e) {
+      console.error("Помилка завантаження:", e);
+      return { results: [] };
+    }
+  }
+
+  // --- ВИПРАВЛЕНА ЛОГІКА КЛІКІВ ТА МЕНЮ (щоб працювало з новим HTML) ---
+  // --- ВИПРАВЛЕНА ЛОГІКА КЛІКІВ (Жанри + Меню) ---
+  document.addEventListener("click", (e) => {
+    const target = e.target;
+
+    // 1. Клік по кнопці "Жанри" (всередині підменю)
+    if (target.classList.contains("genreBtn")) {
+      e.preventDefault();
+      e.stopPropagation(); // Зупиняємо закриття батьківського меню
+      const genreMenu = target.closest(".genreMenu");
+      genreMenu.classList.toggle("active");
+      return; // Виходимо, щоб не спрацювали інші умови
+    }
+
+    // 2. Клік по головних кнопках (Фільми, Серіали, Мульти)
+    const menuBtn = target.closest(".btn");
+    if (menuBtn && menuBtn.closest(".menu-item")) {
+      const parent = menuBtn.closest(".menu-item");
+      
+      // Закриваємо всі інші відкриті меню, крім поточного
+      document.querySelectorAll(".menu-item").forEach(item => {
+        if (item !== parent) item.classList.remove("active");
+      });
+      
+      parent.classList.toggle("active");
+      return;
+    }
+
+    // 3. Закриття всього при кліку "повз" меню
+    if (!target.closest(".menu-item")) {
+      document.querySelectorAll(".menu-item").forEach(el => el.classList.remove("active"));
+      document.querySelectorAll(".genreMenu").forEach(el => el.classList.remove("active"));
+    }
+
+    // 4. Логіка пошуку
+    if (target.closest("#searchBtn")) {
+      performSearch();
+    }
+  });
+
+  // Функція пошуку
+  function performSearch() {
+    const input = document.getElementById("searchInput");
+    if (input && input.value.trim()) {
+      window.location.href = `catalog.html?search=${encodeURIComponent(input.value.trim())}`;
+    }
+  }
+
+  // Живий пошук (підказки)
+  let searchTimeout;
+  const searchInput = document.getElementById("searchInput");
+  searchInput?.addEventListener("input", (e) => {
+    const val = e.target.value.trim();
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(async () => {
+        const resultsBox = document.getElementById("searchResults");
+        if (!val) { 
+            resultsBox.style.display = "none"; 
+            return; 
         }
-    });
-}, observerOptions);
+        const data = await fetchData(`/search/multi?query=${encodeURIComponent(val)}`);
+        if (data.results && data.results.length > 0) {
+            resultsBox.innerHTML = data.results.slice(0, 5).map(item => `
+                <div class="search-item" onclick="location.href='details.html?id=${item.id}&type=${item.media_type || 'movie'}'">
+                    ${item.title || item.name}
+                </div>
+            `).join("");
+            resultsBox.style.display = "block";
+        }
+    }, 300);
+  });
 
-// Функція для спостереження за елементами
-function observeElements() {
-    document.querySelectorAll('.fade-in-element').forEach((el, index) => {
-        observer.observe(el);
-    });
-}
+  // --- Решта твого коду (Favorites, Auth UI, Loaders) ---
+  // (Я скоротив тут, але ти маєш залишити свої функції: updateAuthUI, loadHome і т.д.)
+  
+  function updateAuthUI() {
+    const currentUser = localStorage.getItem("currentUser");
+    const authSection = document.querySelector(".auth-section");
+    if (!authSection) return;
+    if (currentUser) {
+      const name = localStorage.getItem("currentUserName") || "Профіль";
+      authSection.innerHTML = `
+        <div style="display:flex; gap:10px; align-items:center;">
+          <button class="btn-auth" onclick="location.href='profile.html'">👤 ${name}</button>
+          <button class="btn" id="logoutBtn">Вийти</button>
+        </div>`;
+    }
+  }
 
-// Спостерігаємо за елементами при завантаженні
-// Помітити текстові елементи класом для появи при скролі
-function markTextForFade() {
-    const selectors = [
-        '.header-text',
-        '.mainText',
-        '.section-title',
-        '.section-description',
-        'h1', 'h2', 'h3', 'p'
-    ];
-    document.querySelectorAll(selectors.join(',')).forEach(el => {
-        if (!el.classList.contains('fade-in-element')) el.classList.add('fade-in-element');
-        if (!el.classList.contains('fade-in-text')) el.classList.add('fade-in-text');
-    });
-}
+  function createMobileMenu() {
+    const header = document.querySelector(".header");
+    const buttonHeader = document.querySelector(".buttonHeader");
+    if (!header || !buttonHeader || document.querySelector(".hamburger-menu")) return;
 
-document.addEventListener('DOMContentLoaded', () => {
-    markTextForFade();
-    observeElements();
+    const hamburger = document.createElement("div");
+    hamburger.className = "hamburger-menu";
+    hamburger.innerHTML = `<span></span><span></span><span></span>`;
+    header.insertBefore(hamburger, buttonHeader);
+
+    hamburger.addEventListener("click", () => {
+      hamburger.classList.toggle("active");
+      buttonHeader.classList.toggle("active-mobile");
+    });
+  }
+
+  // Ініціалізація
+  updateAuthUI();
+  createMobileMenu();
+  // Виклик твоїх функцій завантаження контенту (loadHome тощо)
+  try { loadHome(); } catch(e) {} 
 });
 
-// Якщо хедер завантажується динамічно, слідкуємо за placeholder і викликаємо updateAuthUI коли з'явиться
-function initHeaderObserver() {
-    const placeholder = document.getElementById('header-placeholder');
+window.addEventListener("DOMContentLoaded", () => {
+  // Intersection Observer для плавної появи при прокручуванні
+  const observerOptions = {
+    threshold: 0.1,
+    rootMargin: "0px 0px -50px 0px",
+  };
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, index) => {
+      if (!entry.isIntersecting) return;
+
+      const isText = entry.target.classList.contains("fade-in-text");
+      const baseDelay = isText ? 15 : 80; // швидший інтервал для тексту
+
+      // Додаємо видимість для самого елементу
+      setTimeout(() => {
+        entry.target.classList.add("visible");
+      }, index * baseDelay);
+      observer.unobserve(entry.target);
+
+      // Якщо це текст, одночасно запустимо появу карточок у тій самій секції
+      if (isText) {
+        // шукаємо найближчу секцію або контейнер
+        const container = entry.target.closest(
+          "section, main, .movies-container, .details-wrapper",
+        );
+        const scope = container || document;
+        const cards = Array.from(
+          scope.querySelectorAll(".fade-in-element"),
+        ).filter(
+          (el) => !el.classList.contains("visible") && el !== entry.target,
+        );
+
+        cards.forEach((card, i) => {
+          setTimeout(
+            () => {
+              card.classList.add("visible");
+              try {
+                observer.unobserve(card);
+              } catch (e) {}
+            },
+            i * 60 + 30,
+          );
+        });
+      }
+    });
+  }, observerOptions);
+
+  // Функція для спостереження за елементами
+  function observeElements() {
+    document.querySelectorAll(".fade-in-element").forEach((el, index) => {
+      observer.observe(el);
+    });
+  }
+
+  // Спостерігаємо за елементами при завантаженні
+  // Помітити текстові елементи класом для появи при скролі
+  function markTextForFade() {
+    const selectors = [
+      ".header-text",
+      ".mainText",
+      ".section-title",
+      ".section-description",
+      "h1",
+      "h2",
+      "h3",
+      "p",
+    ];
+    document.querySelectorAll(selectors.join(",")).forEach((el) => {
+      if (!el.classList.contains("fade-in-element"))
+        el.classList.add("fade-in-element");
+      if (!el.classList.contains("fade-in-text"))
+        el.classList.add("fade-in-text");
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    markTextForFade();
+    observeElements();
+  });
+
+  // Якщо хедер завантажується динамічно, слідкуємо за placeholder і викликаємо updateAuthUI коли з'явиться
+  function initHeaderObserver() {
+    const placeholder = document.getElementById("header-placeholder");
     if (!placeholder) return;
-    if (placeholder.querySelector('.auth-section')) {
-        updateAuthUI();
-        return;
+    if (placeholder.querySelector(".auth-section")) {
+      updateAuthUI();
+      return;
     }
     const mo = new MutationObserver((mutations, obs) => {
-        if (placeholder.querySelector('.auth-section')) {
-            updateAuthUI();
-            obs.disconnect();
-        }
+      if (placeholder.querySelector(".auth-section")) {
+        updateAuthUI();
+        obs.disconnect();
+      }
     });
     mo.observe(placeholder, { childList: true, subtree: true });
-}
+    // Знайди місце, де ініціалізується пошук (зазвичай всередині initHeaderObserver або MutationObserver)
+    const searchBtn = document.getElementById("searchBtn");
+    const searchInput = document.getElementById("searchInput");
+    const buttonHeader = document.querySelector(".buttonHeader");
+    const hamburger = document.querySelector(".hamburger-menu");
 
-const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (searchBtn && searchInput) {
+      searchBtn.addEventListener("click", () => {
+        const query = searchInput.value.trim();
+        if (query) {
+          // Твоя логіка переходу на пошук
+          window.location.href = `catalog.html?search=${encodeURIComponent(query)}`;
 
-async function fetchData(path) {
-    try {
-        const separator = path.includes('?') ? '&' : '?';
-        const url = path.startsWith('http') 
-            ? path 
-            : `https://api.themoviedb.org/3${path}${separator}api_key=${API_KEY}&language=uk-UA`;
-            
-        const res = await fetch(url);
-        return await res.json();
-    } catch (e) { 
-        console.error("Помилка завантаження:", e); 
-        return { results: [] }; 
+          // ДОДАЙ ЦЕ: закриваємо меню після натискання на пошук
+          if (
+            buttonHeader &&
+            buttonHeader.classList.contains("active-mobile")
+          ) {
+            buttonHeader.classList.remove("active-mobile");
+            hamburger.classList.remove("active");
+          }
+        }
+      });
+
+      // Також додамо закриття при натисканні Enter
+      searchInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") searchBtn.click();
+      });
     }
-}
+  }
 
-function createCard(item, type, removable = false) {
+  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  async function fetchData(path) {
+    try {
+      const separator = path.includes("?") ? "&" : "?";
+      const url = path.startsWith("http")
+        ? path
+        : `https://api.themoviedb.org/3${path}${separator}api_key=${API_KEY}&language=uk-UA`;
+
+      const res = await fetch(url);
+      return await res.json();
+    } catch (e) {
+      console.error("Помилка завантаження:", e);
+      return { results: [] };
+    }
+  }
+
+  function createCard(item, type, removable = false) {
     const title = item.title || item.name;
     // Support both API items (with poster_path) and saved favorites (with full poster URL in `poster`)
     const poster = item.poster_path
-        ? `https://image.tmdb.org/t/p/w300${item.poster_path}`
-        : (item.poster ? item.poster : 'img/placeholder-1125x1500-3x4.gif');
-    const itemType = type || (item.title ? 'movie' : 'tv');
-    const rating = item.vote_average ? item.vote_average.toFixed(1) : 'N/A';
+      ? `https://image.tmdb.org/t/p/w300${item.poster_path}`
+      : item.poster
+        ? item.poster
+        : "img/placeholder-1125x1500-3x4.gif";
+    const itemType = type || (item.title ? "movie" : "tv");
+    const rating = item.vote_average ? item.vote_average.toFixed(1) : "N/A";
 
-    const encoded = encodeURIComponent(JSON.stringify({ id: item.id, title, poster, type: itemType, genre_ids: item.genre_ids || item.genre_ids || [] }));
+    const encoded = encodeURIComponent(
+      JSON.stringify({
+        id: item.id,
+        title,
+        poster,
+        type: itemType,
+        genre_ids: item.genre_ids || item.genre_ids || [],
+      }),
+    );
     // If this card is rendered in profile and marked removable, show a remove button instead of add
     const actionHtml = removable
-        ? `<button class="btn" onclick="removeFromFavorites('${item.id}','${itemType}')">Видалити</button>`
-        : `<button onclick="addToFavorites('${encoded}')" class="btn-fav">♥</button>`;
+      ? `<button class="btn" onclick="removeFromFavorites('${item.id}','${itemType}')">Видалити</button>`
+      : `<button onclick="addToFavorites('${encoded}')" class="btn-fav">♥</button>`;
 
     return `
         <div class="movie-card fade-in-element">
@@ -128,22 +358,21 @@ function createCard(item, type, removable = false) {
                 </div>
             </div>
         </div>`;
-}
+  }
 
-
-
-function updateAuthUI() {
+  function updateAuthUI() {
     const currentUser = localStorage.getItem("currentUser");
     const authSection = document.querySelector(".auth-section");
-    
+
     if (!authSection) {
-        console.error("Помилка: Не знайдено блок з класом .auth-section");
-        return;
+      console.error("Помилка: Не знайдено блок з класом .auth-section");
+      return;
     }
 
     if (currentUser && currentUser !== "null" && currentUser !== "") {
-        const displayName = localStorage.getItem("currentUserName") || currentUser;
-        authSection.innerHTML = `
+      const displayName =
+        localStorage.getItem("currentUserName") || currentUser;
+      authSection.innerHTML = `
             <div class="user-controls" style="display:flex; gap:10px; align-items:center;">
                 <button class="btn-auth" id="profileBtn" onclick="location.href='profile.html'">
                     👤 ${displayName}
@@ -153,45 +382,47 @@ function updateAuthUI() {
                 </button>
             </div>`;
     } else {
-        // Використовуємо ідентифікатор authBtn, щоб делегований обробник кліків працював коректно
-        authSection.innerHTML = `<button class="btn-auth" id="authBtn"><span class="icon">👤</span> <span class="auth-text">Увійти</span></button>`;
+      // Використовуємо ідентифікатор authBtn, щоб делегований обробник кліків працював коректно
+      authSection.innerHTML = `<button class="btn-auth" id="authBtn"><span class="icon">👤</span> <span class="auth-text">Увійти</span></button>`;
     }
-}
+  }
 
-window.openAuthModal = function () {
+  window.openAuthModal = function () {
     const modal = document.getElementById("authModal");
     if (modal) modal.style.display = "flex";
-};
+  };
 
-function renderBackButton() {
+  function renderBackButton() {
     // Back button removed from all pages
-}
+  }
 
-window.toggleAuth = function(type) {
+  window.toggleAuth = function (type) {
     const loginForm = document.getElementById("loginForm");
     const regForm = document.getElementById("regForm");
-    if (loginForm) loginForm.style.display = type === 'login' ? 'block' : 'none';
-    if (regForm) regForm.style.display = type === 'reg' ? 'block' : 'none';
-};
+    if (loginForm)
+      loginForm.style.display = type === "login" ? "block" : "none";
+    if (regForm) regForm.style.display = type === "reg" ? "block" : "none";
+  };
 
-window.handleLogin = function(e) {
+  window.handleLogin = function (e) {
     if (e) e.preventDefault();
 
-    const email = document.getElementById("loginEmail").value.trim().toLowerCase();
+    const email = document
+      .getElementById("loginEmail")
+      .value.trim()
+      .toLowerCase();
     const pass = document.getElementById("loginPass").value.trim();
 
     const userData = localStorage.getItem(`user_${email}`);
-    
+
     if (!userData) {
-        
-        return;
+      return;
     }
 
     const user = JSON.parse(userData);
 
     if (user.pass !== pass) {
-        
-        return;
+      return;
     }
 
     localStorage.setItem("currentUser", user.email);
@@ -203,113 +434,130 @@ window.handleLogin = function(e) {
     updateAuthUI();
     loadHome();
     loadProfile();
-};
+  };
 
-window.handleRegister = function(e) {
+  window.handleRegister = function (e) {
     if (e) e.preventDefault();
 
     const name = document.getElementById("regName").value.trim();
-    const email = document.getElementById("regEmail").value.trim().toLowerCase();
+    const email = document
+      .getElementById("regEmail")
+      .value.trim()
+      .toLowerCase();
     const pass = document.getElementById("regPass").value.trim();
 
     if (!name || !validateEmail(email) || pass.length < 4) {
-        alert("Перевірте дані!");
-        return;
+      alert("Перевірте дані!");
+      return;
     }
 
     if (localStorage.getItem(`user_${email}`)) {
-        alert("Пошта зайнята!");
-        return;
+      alert("Пошта зайнята!");
+      return;
     }
 
     const user = {
-        name: name,
-        email: email,
-        pass: pass
+      name: name,
+      email: email,
+      pass: pass,
     };
 
     localStorage.setItem(`user_${email}`, JSON.stringify(user));
 
     alert("Успіх! Тепер увійдіть.");
-    toggleAuth('login');
-};
+    toggleAuth("login");
+  };
 
-
-
-window.addToFavorites = function(encodedItem) {
+  window.addToFavorites = function (encodedItem) {
     const user = localStorage.getItem("currentUser");
     if (!user) {
-        alert("Увійдіть в акаунт!");
-        document.getElementById("authModal").style.display = "flex";
-        return;
+      alert("Увійдіть в акаунт!");
+      document.getElementById("authModal").style.display = "flex";
+      return;
     }
     try {
-        const item = JSON.parse(decodeURIComponent(encodedItem));
-        let favs = JSON.parse(localStorage.getItem(`fav_${user}`)) || [];
-        if (favs.some(f => f.id === item.id && f.type === item.type)) return alert("Вже в обраному!");
-        // ensure fields
-        const toSave = { id: item.id, title: item.title || item.name, poster: item.poster, type: item.type || 'movie', genre_ids: item.genre_ids || [] };
-        favs.push(toSave);
-        localStorage.setItem(`fav_${user}`, JSON.stringify(favs));
-        alert(`"${toSave.title}" додано!`);
+      const item = JSON.parse(decodeURIComponent(encodedItem));
+      let favs = JSON.parse(localStorage.getItem(`fav_${user}`)) || [];
+      if (favs.some((f) => f.id === item.id && f.type === item.type))
+        return alert("Вже в обраному!");
+      // ensure fields
+      const toSave = {
+        id: item.id,
+        title: item.title || item.name,
+        poster: item.poster,
+        type: item.type || "movie",
+        genre_ids: item.genre_ids || [],
+      };
+      favs.push(toSave);
+      localStorage.setItem(`fav_${user}`, JSON.stringify(favs));
+      alert(`"${toSave.title}" додано!`);
     } catch (e) {
-        console.error('addToFavorites error', e);
-        alert('Не вдалося додати в обране');
+      console.error("addToFavorites error", e);
+      alert("Не вдалося додати в обране");
     }
-};
+  };
 
-window.removeFromFavorites = function(id, type) {
+  window.removeFromFavorites = function (id, type) {
     const user = localStorage.getItem("currentUser");
     if (!user) {
-        alert("Увійдіть в акаунт!");
-        return;
+      alert("Увійдіть в акаунт!");
+      return;
     }
     try {
-        let favs = JSON.parse(localStorage.getItem(`fav_${user}`)) || [];
-        const filtered = favs.filter(f => !(String(f.id) === String(id) && f.type === type));
-        localStorage.setItem(`fav_${user}`, JSON.stringify(filtered));
-        alert('Видалено з обраного');
-        // перерендеримо профіль
-        try { loadProfile(); } catch (e) {}
+      let favs = JSON.parse(localStorage.getItem(`fav_${user}`)) || [];
+      const filtered = favs.filter(
+        (f) => !(String(f.id) === String(id) && f.type === type),
+      );
+      localStorage.setItem(`fav_${user}`, JSON.stringify(filtered));
+      alert("Видалено з обраного");
+      // перерендеримо профіль
+      try {
+        loadProfile();
+      } catch (e) {}
     } catch (e) {
-        console.error('removeFromFavorites error', e);
-        alert('Не вдалося видалити з обраного');
+      console.error("removeFromFavorites error", e);
+      alert("Не вдалося видалити з обраного");
     }
-};
+  };
 
-function performSearch() {
+  function performSearch() {
     const input = document.getElementById("searchInput");
     if (input && input.value.trim()) {
-        window.location.href = `catalog.html?search=${encodeURIComponent(input.value.trim())}`;
+      window.location.href = `catalog.html?search=${encodeURIComponent(input.value.trim())}`;
     }
-}
+  }
 
-let searchTimeout;
+  let searchTimeout;
 
-async function liveSearch(query) {
+  async function liveSearch(query) {
     const resultsBox = document.getElementById("searchResults");
     if (!resultsBox) return;
 
     if (!query) {
-        resultsBox.innerHTML = "";
-        resultsBox.style.display = "none";
-        return;
+      resultsBox.innerHTML = "";
+      resultsBox.style.display = "none";
+      return;
     }
 
-    const data = await fetchData(`/search/multi?query=${encodeURIComponent(query)}`);
+    const data = await fetchData(
+      `/search/multi?query=${encodeURIComponent(query)}`,
+    );
 
-    const filtered = (data.results || []).filter(item => {
-        const title = (item.title || item.name || "").toLowerCase();
-        return title.startsWith(query.toLowerCase());
+    const filtered = (data.results || []).filter((item) => {
+      const title = (item.title || item.name || "").toLowerCase();
+      return title.startsWith(query.toLowerCase());
     });
 
     if (filtered.length === 0) {
-        resultsBox.innerHTML = "<div style='color: white;'>Нічого не знайдено</div>";
-        resultsBox.style.display = "block";
-        return;
+      resultsBox.innerHTML =
+        "<div style='color: white;'>Нічого не знайдено</div>";
+      resultsBox.style.display = "block";
+      return;
     }
 
-    resultsBox.innerHTML = filtered.slice(0, 8).map(item => {
+    resultsBox.innerHTML = filtered
+      .slice(0, 8)
+      .map((item) => {
         const title = item.title || item.name;
         const type = item.media_type || (item.title ? "movie" : "tv");
 
@@ -318,107 +566,127 @@ async function liveSearch(query) {
                 ${title}
             </div>
         `;
-    }).join("");
+      })
+      .join("");
 
     resultsBox.style.display = "block";
-}
+  }
 
-async function loadHome() {
+  async function loadHome() {
     const topCont = document.getElementById("top-movies-home");
     const newCont = document.getElementById("new-tv-home");
     if (!topCont || !newCont) return;
 
     const topMovies = await fetchData("/movie/popular?page=1");
-    topCont.innerHTML = topMovies.results.slice(0, 5).map(i => createCard(i, 'movie')).join('');
+    topCont.innerHTML = topMovies.results
+      .slice(0, 5)
+      .map((i) => createCard(i, "movie"))
+      .join("");
 
-    const newTV = await fetchData("/discover/tv?sort_by=popularity.desc&first_air_date.gte=2025-01-01&first_air_date.lte=2026-12-31");
-    newCont.innerHTML = newTV.results.slice(0, 5).map(i => createCard(i, 'tv')).join('');
-    
+    const newTV = await fetchData(
+      "/discover/tv?sort_by=popularity.desc&first_air_date.gte=2025-01-01&first_air_date.lte=2026-12-31",
+    );
+    newCont.innerHTML = newTV.results
+      .slice(0, 5)
+      .map((i) => createCard(i, "tv"))
+      .join("");
+
     observeElements();
-}
+  }
 
-async function loadTrendingNow() {
+  async function loadTrendingNow() {
     const trendingCont = document.getElementById("trending-now-home");
     if (!trendingCont) return;
 
     const moviePath = `/discover/movie?sort_by=popularity.desc&primary_release_date.gte=2025-01-01&primary_release_date.lte=2026-12-31`;
     const tvPath = `/discover/tv?sort_by=popularity.desc&first_air_date.gte=2025-01-01&first_air_date.lte=2026-12-31`;
 
-    const [movies, tv] = await Promise.all([fetchData(moviePath), fetchData(tvPath)]);
+    const [movies, tv] = await Promise.all([
+      fetchData(moviePath),
+      fetchData(tvPath),
+    ]);
     let combined = [
-        ...(movies.results || []).map(i => ({ ...i, m_type: 'movie' })),
-        ...(tv.results || []).map(i => ({ ...i, m_type: 'tv' }))
+      ...(movies.results || []).map((i) => ({ ...i, m_type: "movie" })),
+      ...(tv.results || []).map((i) => ({ ...i, m_type: "tv" })),
     ];
     combined.sort((a, b) => b.popularity - a.popularity);
-    trendingCont.innerHTML = combined.slice(0, 10).map(i => createCard(i, i.m_type)).join('');
-}
+    trendingCont.innerHTML = combined
+      .slice(0, 10)
+      .map((i) => createCard(i, i.m_type))
+      .join("");
+  }
 
-async function loadCatalog() {
+  async function loadCatalog() {
     const cont = document.getElementById("movies");
     if (!cont) return;
 
     const params = new URLSearchParams(window.location.search);
     const q = params.get("search");
     const g = params.get("genre");
-    const type = params.get("type") || "movie"; 
+    const type = params.get("type") || "movie";
     const sort = params.get("sort"); // Додано обробку параметра sort
-    const topParam = params.get('top');
-    const newParam = params.get('new');
+    const topParam = params.get("top");
+    const newParam = params.get("new");
 
     let path = "";
 
     if (q) {
-        // Пошук
-        path = `/search/multi?query=${encodeURIComponent(q)}`;
-    } else if (g && topParam === '1') {
-        // Жанр + Топ-10: сортуємо за рейтингом
-        path = `/discover/${type}?with_genres=${g}&sort_by=vote_average.desc`;
+      // Пошук
+      path = `/search/multi?query=${encodeURIComponent(q)}`;
+    } else if (g && topParam === "1") {
+      // Жанр + Топ-10: сортуємо за рейтингом
+      path = `/discover/${type}?with_genres=${g}&sort_by=vote_average.desc`;
     } else if (g) {
-        // За жанром (і "Всі мультфільми", оскільки вони використовують genre=16)
-        path = `/discover/${type}?with_genres=${g}`;
-    } else if (sort === 'top') {
-        // Топ-10 (найрейтинговіші)
-        path = `/${type}/top_rated?page=1`;
-    } else if (sort === 'new') {
-        // Новинки — обмежимо діапазон 2025-01-01..2026-12-31 і сортуємо за датою
-        const dateField = type === 'movie' ? 'primary_release_date' : 'first_air_date';
-        path = `/discover/${type}?sort_by=${dateField}.desc&${dateField}.gte=2025-01-01&${dateField}.lte=2026-12-31`;
-    } else if (topParam === '1') {
-        // Підтримка параметра top=1 (без жанру)
-        path = `/${type}/top_rated?page=1`;
-    } else if (newParam === '1') {
-        const dateField = type === 'movie' ? 'primary_release_date' : 'first_air_date';
-        path = `/discover/${type}?sort_by=${dateField}.desc&${dateField}.gte=2025-01-01&${dateField}.lte=2026-12-31`;
+      // За жанром (і "Всі мультфільми", оскільки вони використовують genre=16)
+      path = `/discover/${type}?with_genres=${g}`;
+    } else if (sort === "top") {
+      // Топ-10 (найрейтинговіші)
+      path = `/${type}/top_rated?page=1`;
+    } else if (sort === "new") {
+      // Новинки — обмежимо діапазон 2025-01-01..2026-12-31 і сортуємо за датою
+      const dateField =
+        type === "movie" ? "primary_release_date" : "first_air_date";
+      path = `/discover/${type}?sort_by=${dateField}.desc&${dateField}.gte=2025-01-01&${dateField}.lte=2026-12-31`;
+    } else if (topParam === "1") {
+      // Підтримка параметра top=1 (без жанру)
+      path = `/${type}/top_rated?page=1`;
+    } else if (newParam === "1") {
+      const dateField =
+        type === "movie" ? "primary_release_date" : "first_air_date";
+      path = `/discover/${type}?sort_by=${dateField}.desc&${dateField}.gte=2025-01-01&${dateField}.lte=2026-12-31`;
     } else {
-        // Кнопка "Всі" (за замовчуванням завантажує популярні)
-        path = `/${type}/popular?page=1`;
+      // Кнопка "Всі" (за замовчуванням завантажує популярні)
+      path = `/${type}/popular?page=1`;
     }
 
     const data = await fetchData(path);
-    
-    const results = (data.results || []);
+
+    const results = data.results || [];
     // Якщо запитали Top-10 (через sort=top або top=1), обмежимо до 10
-    const isTopRequest = sort === 'top' || topParam === '1' || (g && params.get('top') === '1');
+    const isTopRequest =
+      sort === "top" || topParam === "1" || (g && params.get("top") === "1");
     const shown = isTopRequest ? results.slice(0, 10) : results;
 
     if (shown.length > 0) {
-        cont.innerHTML = shown.map(i => createCard(i, i.media_type || type)).join('');
+      cont.innerHTML = shown
+        .map((i) => createCard(i, i.media_type || type))
+        .join("");
     } else {
-        cont.innerHTML = "<h2 style='color: white;'>Нічого не знайдено</h2>";
+      cont.innerHTML = "<h2 style='color: white;'>Нічого не знайдено</h2>";
     }
 
     observeElements();
-}
+  }
 
-async function loadMovieDetails() {
+  async function loadMovieDetails() {
     const cont = document.getElementById("details-content");
     if (!cont) return;
     const p = new URLSearchParams(window.location.search);
-    const d = await fetchData(`/${p.get('type') || 'movie'}/${p.get('id')}`);
-    if (d.poster_path){
-        poster = `https://image.tmdb.org/t/p/w500${d.poster_path}`;
+    const d = await fetchData(`/${p.get("type") || "movie"}/${p.get("id")}`);
+    if (d.poster_path) {
+      poster = `https://image.tmdb.org/t/p/w500${d.poster_path}`;
     } else {
-       poster = 'img/placeholder-1125x1500-3x4.gif'
+      poster = "img/placeholder-1125x1500-3x4.gif";
     }
     cont.innerHTML = `
         <div class="details-wrapper" style="display:flex; gap:30px; padding:40px; flex-wrap:wrap; color: white;">
@@ -434,164 +702,236 @@ async function loadMovieDetails() {
                 <button class="btn" onclick="window.history.back()" style="margin-top:20px; background-color:var(--primary);">← Назад</button>
             </div>
         </div>`;
-}
+  }
 
-
-function loadProfile() {
+  function loadProfile() {
     const cont = document.getElementById("favorite-movies");
     if (!cont) return;
 
     const user = localStorage.getItem("currentUser");
-    
-    if (!user || user === "null") {
-        // Якщо користувач не авторизований — перенаправляємо на головну
-        location.href = 'index.html';
-        return;
-    }
 
+    if (!user || user === "null") {
+      // Якщо користувач не авторизований — перенаправляємо на головну
+      location.href = "index.html";
+      return;
+    }
 
     const favs = JSON.parse(localStorage.getItem(`fav_${user}`)) || [];
 
     const renderList = (filter) => {
-        let list = favs;
-        if (filter === 'movies') list = favs.filter(f => f.type === 'movie' && !(f.genre_ids || []).includes(16));
-        if (filter === 'tv') list = favs.filter(f => f.type === 'tv');
-        if (filter === 'cartoons') list = favs.filter(f => (f.genre_ids || []).includes(16));
+      let list = favs;
+      if (filter === "movies")
+        list = favs.filter(
+          (f) => f.type === "movie" && !(f.genre_ids || []).includes(16),
+        );
+      if (filter === "tv") list = favs.filter((f) => f.type === "tv");
+      if (filter === "cartoons")
+        list = favs.filter((f) => (f.genre_ids || []).includes(16));
 
-        if (list.length === 0) {
-            cont.innerHTML = "<h2 style='color:white; text-align:center; width:100%;'>Список порожній</h2>";
-        } else {
-            cont.innerHTML = list.map(item => createCard(item, item.type)).join('');
-        }
-        observeElements();
+      if (list.length === 0) {
+        cont.innerHTML =
+          "<h2 style='color:white; text-align:center; width:100%;'>Список порожній</h2>";
+      } else {
+        cont.innerHTML = list
+          .map((item) => createCard(item, item.type))
+          .join("");
+      }
+      observeElements();
     };
 
     // Ініціалізація кнопок фільтрації
-    const btnMovies = document.getElementById('fav-movies-btn');
-    const btnTV = document.getElementById('fav-tv-btn');
-    const btnCartoons = document.getElementById('fav-cartoons-btn');
+    const btnMovies = document.getElementById("fav-movies-btn");
+    const btnTV = document.getElementById("fav-tv-btn");
+    const btnCartoons = document.getElementById("fav-cartoons-btn");
     if (btnMovies && btnTV && btnCartoons) {
-        btnMovies.addEventListener('click', () => renderList('movies'));
-        btnTV.addEventListener('click', () => renderList('tv'));
-        btnCartoons.addEventListener('click', () => renderList('cartoons'));
+      btnMovies.addEventListener("click", () => renderList("movies"));
+      btnTV.addEventListener("click", () => renderList("tv"));
+      btnCartoons.addEventListener("click", () => renderList("cartoons"));
     }
 
     // Початковий показ — всі
-    renderList('movies');
-}
+    renderList("movies");
+  }
 
-
-
-document.addEventListener("click", (e) => {
+  document.addEventListener("click", (e) => {
     const target = e.target;
-    if (target.id === "authBtn") document.getElementById("authModal").style.display = "flex";
+    if (target.id === "authBtn")
+      document.getElementById("authModal").style.display = "flex";
     if (target.classList.contains("close-modal") || target.id === "authModal") {
-        document.getElementById("authModal").style.display = "none";
+      document.getElementById("authModal").style.display = "none";
     }
     if (target.id === "logoutBtn") {
-        localStorage.removeItem("currentUser");
-        localStorage.removeItem("currentUserName");
-        // після логаута відправимо користувача на головну і оновимо UI
-        updateAuthUI();
-        loadHome();
-        loadProfile();
-        location.href = 'index.html';
+      localStorage.removeItem("currentUser");
+      localStorage.removeItem("currentUserName");
+      // після логаута відправимо користувача на головну і оновимо UI
+      updateAuthUI();
+      loadHome();
+      loadProfile();
+      location.href = "index.html";
     }
     if (target.id === "searchBtn") performSearch();
 
-  
     const mainBtn = target.closest(".btn");
-    if (mainBtn && mainBtn.parentElement.parentElement.classList.contains("buttonHeader")) {
-        const parent = mainBtn.parentElement;
-        document.querySelectorAll('.buttonHeader > div').forEach(div => div !== parent && div.classList.remove("active"));
-        document.querySelectorAll('.genreMenu').forEach(el => el.classList.remove("active"));
-        parent.classList.toggle("active");
+    if (
+      mainBtn &&
+      mainBtn.parentElement.parentElement.classList.contains("buttonHeader")
+    ) {
+      const parent = mainBtn.parentElement;
+      document
+        .querySelectorAll(".buttonHeader > div")
+        .forEach((div) => div !== parent && div.classList.remove("active"));
+      document
+        .querySelectorAll(".genreMenu")
+        .forEach((el) => el.classList.remove("active"));
+      parent.classList.toggle("active");
     }
     if (target.classList.contains("genreBtn")) {
-        e.stopPropagation();
-        target.parentElement.classList.toggle("active");
+      e.stopPropagation();
+      target.parentElement.classList.toggle("active");
     }
     if (!target.closest(".buttonHeader")) {
-        document.querySelectorAll('.buttonHeader > div, .genreMenu').forEach(el => el.classList.remove("active"));
+      document
+        .querySelectorAll(".buttonHeader > div, .genreMenu")
+        .forEach((el) => el.classList.remove("active"));
     }
-});
+  });
 
-const searchInput = document.getElementById("searchInput");
+  const searchInput = document.getElementById("searchInput");
 
-searchInput?.addEventListener("input", (e) => {
+  searchInput?.addEventListener("input", (e) => {
     const value = e.target.value.trim();
 
     clearTimeout(searchTimeout);
 
     searchTimeout = setTimeout(() => {
-        liveSearch(value);
+      liveSearch(value);
     }, 300);
-});
+  });
 
-searchInput?.addEventListener("keypress", (e) => {
+  searchInput?.addEventListener("keypress", (e) => {
     if (e.key === "Enter") performSearch();
+  });
+
+  function createFloatingBean() {
+    const bean = document.createElement("div");
+    bean.textContent = "🎥";
+    bean.style.position = "fixed";
+    bean.style.fontSize = Math.random() * 20 + 20 + "px";
+    bean.style.left = Math.random() * 100 + "%";
+    bean.style.top = "100%";
+    bean.style.opacity = "0.1";
+    bean.style.pointerEvents = "none";
+    bean.style.zIndex = "0";
+    bean.style.transition = "all 10s linear";
+
+    document.body.appendChild(bean);
+
+    setTimeout(() => {
+      bean.style.top = "-100px";
+      bean.style.transform = `rotate(${Math.random() * 360}deg)`;
+    }, 100);
+
+    setTimeout(() => {
+      bean.remove();
+    }, 10000);
+  }
+
+  function createFloatingBean1() {
+    const bean = document.createElement("div");
+    bean.textContent = "🎬";
+    bean.style.position = "fixed";
+    bean.style.fontSize = Math.random() * 20 + 20 + "px";
+    bean.style.left = Math.random() * 100 + "%";
+    bean.style.top = "100%";
+    bean.style.opacity = "0.1";
+    bean.style.pointerEvents = "none";
+    bean.style.zIndex = "0";
+    bean.style.transition = "all 10s linear";
+
+    document.body.appendChild(bean);
+
+    setTimeout(() => {
+      bean.style.top = "-100px";
+      bean.style.transform = `rotate(${Math.random() * 360}deg)`;
+    }, 100);
+
+    setTimeout(() => {
+      bean.remove();
+    }, 10000);
+  }
+
+  createMobileMenu();
+  // Оновлена функція спостереження за хедером
+  function initHeaderObserver() {
+    const placeholder = document.getElementById("header-placeholder");
+    if (!placeholder) return;
+
+    // Якщо хедер вже є
+    if (placeholder.querySelector(".auth-section")) {
+      updateAuthUI();
+      createMobileMenu(); // Викликаємо створення меню
+      return;
+    }
+
+    // Якщо хедер ще вантажиться
+    const mo = new MutationObserver((mutations, obs) => {
+      if (placeholder.querySelector(".auth-section")) {
+        updateAuthUI();
+        createMobileMenu(); // Викликаємо створення меню
+        obs.disconnect();
+      }
+    });
+    mo.observe(placeholder, { childList: true, subtree: true });
+  }
+
+  // Нова функція для мобільного меню
+  function createMobileMenu() {
+    const header = document.querySelector(".header");
+    const buttonHeader = document.querySelector(".buttonHeader");
+
+    // Захист: якщо меню вже створено або хедера немає, нічого не робимо
+    if (!header || !buttonHeader || document.querySelector(".hamburger-menu"))
+      return;
+
+    // Створюємо кнопку гамбургер-меню
+    const hamburger = document.createElement("div");
+    hamburger.className = "hamburger-menu";
+    hamburger.innerHTML = `
+            <span></span>
+            <span></span>
+            <span></span>
+        `;
+
+    // Вставляємо бургер у хедер (перед навігацією)
+    header.insertBefore(hamburger, buttonHeader);
+
+    // Додаємо логіку відкриття/закриття
+    hamburger.addEventListener("click", () => {
+      hamburger.classList.toggle("active");
+      buttonHeader.classList.toggle("active-mobile");
+    });
+
+    // Закриваємо меню при кліку поза ним
+    document.addEventListener("click", (e) => {
+      if (
+        !header.contains(e.target) &&
+        buttonHeader.classList.contains("active-mobile")
+      ) {
+        hamburger.classList.remove("active");
+        buttonHeader.classList.remove("active-mobile");
+      }
+    });
+  }
+
+  initHeaderObserver();
+  updateAuthUI();
+  renderBackButton();
+  loadHome();
+  loadTrendingNow();
+  loadCatalog();
+  loadMovieDetails();
+  loadProfile();
+  createMobileMenu();
+  setInterval(createFloatingBean, 2000);
+  setInterval(createFloatingBean1, 2000);
 });
-
-function createFloatingBean() {
-  const bean = document.createElement("div")
-  bean.textContent = "🎥"
-  bean.style.position = "fixed"
-  bean.style.fontSize = Math.random() * 20 + 20 + "px"
-  bean.style.left = Math.random() * 100 + "%"
-  bean.style.top = "100%"
-  bean.style.opacity = "0.1"
-  bean.style.pointerEvents = "none"
-  bean.style.zIndex = "0"
-  bean.style.transition = "all 10s linear"
-
-  document.body.appendChild(bean)
-
-  setTimeout(() => {
-    bean.style.top = "-100px"
-    bean.style.transform = `rotate(${Math.random() * 360}deg)`
-  }, 100)
-
-  setTimeout(() => {
-    bean.remove()
-  }, 10000)
-}
-
-function createFloatingBean1() {
-  const bean = document.createElement("div")
-  bean.textContent = "🎬"
-  bean.style.position = "fixed"
-  bean.style.fontSize = Math.random() * 20 + 20 + "px"
-  bean.style.left = Math.random() * 100 + "%"
-  bean.style.top = "100%"
-  bean.style.opacity = "0.1"
-  bean.style.pointerEvents = "none"
-  bean.style.zIndex = "0"
-  bean.style.transition = "all 10s linear"
-
-  document.body.appendChild(bean)
-
-  setTimeout(() => {
-    bean.style.top = "-100px"
-    bean.style.transform = `rotate(${Math.random() * 360}deg)`
-  }, 100)
-
-  setTimeout(() => {
-    bean.remove()
-  }, 10000)
-}
-
-
-
-initHeaderObserver();
-updateAuthUI();
-renderBackButton();
-loadHome();
-loadTrendingNow();
-loadCatalog();
-loadMovieDetails();
-loadProfile();
-setInterval(createFloatingBean, 2000);
-setInterval(createFloatingBean1, 2000);
-
-});
-
