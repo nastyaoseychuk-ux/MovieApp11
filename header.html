@@ -1,81 +1,84 @@
 <div class="container">
     <div class="header">
-        <a href="index.html" class="logo-link">
-            <img class="logo" src="logo.png" alt="Logo">
-        </a>
-        
-        <div class="buttonHeader">
-            <div class="nav-group">
-                <div id="Movies" class="menu-item">
-                    <button id="Moviesbtn" class="btn">
+            <a href="index.html" style="display: flex; align-items: center; text-decoration: none;">
+                <img class="logo" src="logo.png" alt="Logo">
+            </a>
+                <div class="buttonHeader">
+                    <div id="Movies">
+                        <button id="Moviesbtn" class="btn">
                         <span>Фільми</span>
                         <span class="arrow">▼</span>
-                    </button>
-                    <div class="submenu">
-                        <a href="catalog.html?type=movie"><button>Усі</button></a>
-                        <div class="genreMenu">
-                            <button class="genreBtn">Жанри</button>
-                            <div class="genreList">
-                                <a href="catalog.html?type=movie&genre=35"><button>Комедії</button></a>
-                                <a href="catalog.html?type=movie&genre=18"><button>Драма</button></a>
-                                <a href="catalog.html?type=movie&genre=28"><button>Бойовик</button></a>
-                                <a href="catalog.html?type=movie&genre=878"><button>Фантастика</button></a>
-                                <a href="catalog.html?type=movie&genre=53"><button>Трилер</button></a>
-                            </div>
-                        </div>
-                        <a href="catalog.html?type=movie&top=1"><button>Топ-10</button></a>
-                        <a href="catalog.html?type=movie&new=1"><button>Новинки</button></a>
-                    </div>
-                </div>
+                        </button>
 
-                <div id="Series" class="menu-item">
-                    <button id="Seriesbtn" class="btn">
+                        <div class="submenu">
+                            <a href="catalog.html?type=movie"><button>Всі фільми</button></a>
+                            <div class="genreMenu">
+                                <button class="genreBtn">Жанри</button>
+                                <div class="genreList">
+                                    <a href="catalog.html?type=movie&genre=35"><button>Комедії</button></a>
+                                    <a href="catalog.html?type=movie&genre=18"><button>Драма</button></a>
+                                    <a href="catalog.html?type=movie&genre=28"><button>Бойовик</button></a>
+                                    <a href="catalog.html?type=movie&genre=878"><button>Фантастика</button></a>
+                                    <a href="catalog.html?type=movie&genre=53"><button>Трилер</button></a>
+                                </div>
+                            </div>
+                            <a href="catalog.html?type=movie&top=1"><button>Топ-10</button></a>
+                            <a href="catalog.html?type=movie&new=1"><button>Новинки</button></a>
+                        </div>
+                    </div>
+                    <div id="Series">
+                        <button id="Seriesbtn" class="btn">
                         <span>Серіали</span>
                         <span class="arrow">▼</span>
-                    </button>
-                    <div class="submenu">
-                        <a href="catalog.html?type=tv"><button>Усі</button></a>
-                        <div class="genreMenu">
-                            <button class="genreBtn">Жанри</button>
-                            <div class="genreList">
-                                <a href="catalog.html?type=tv&genre=35"><button>Комедії</button></a>
-                                <a href="catalog.html?type=tv&genre=18"><button>Драма</button></a>
-                                <a href="catalog.html?type=tv&genre=28"><button>Бойовик</button></a>
-                                <a href="catalog.html?type=tv&genre=878"><button>Фантастика</button></a>
-                                <a href="catalog.html?type=tv&genre=53"><button>Трилер</button></a>
-                            </div>
-                        </div>
-                        <a href="catalog.html?type=tv&top=1"><button>Топ-10</button></a>
-                        <a href="catalog.html?type=tv&new=1"><button>Новинки</button></a>
-                    </div>
-                </div>
+                        </button>
 
-                <div id="Cartoons" class="menu-item">
-                    <button id="Cartoonsbtn" class="btn">
+                        <div class="submenu">
+                            <a href="catalog.html?type=tv" class="btn-submenu"><button>Всі серіали</button></a>
+                            <div class="genreMenu">
+                                <button class="genreBtn">Жанри</button>
+                                <div class="genreList">
+                                    <a href="catalog.html?type=tv&genre=35"><button>Комедії</button></a>
+                                    <a href="catalog.html?type=tv&genre=18"><button>Драма</button></a>
+                                    <a href="catalog.html?type=tv&genre=28"><button>Бойовик</button></a>
+                                    <a href="catalog.html?type=tv&genre=878"><button>Фантастика</button></a>
+                                    <a href="catalog.html?type=tv&genre=53"><button>Трилер</button></a>
+                                </div>
+                            </div>
+                            <a href="catalog.html?type=tv&top=1"class="btn-submenu"><button>Топ-10</button></a>
+                            <a href="catalog.html?type=tv&new=1"class="btn-submenu"><button>Новинки</button></a>
+                        </div>
+                    </div>
+                    <div id="Cartoons">
+                        <button id="Cartoonsbtn" class="btn">
                         <span>Мультфільми</span>
                         <span class="arrow">▼</span>
-                    </button>
-                    <div class="submenu">
-                        <a href="catalog.html?type=movie&genre=16"><button>Усі</button></a>
-                        <a href="catalog.html?type=movie&genre=16&top=1"><button>Топ-10</button></a>
-                        <a href="catalog.html?type=movie&genre=16&new=1"><button>Новинки</button></a>
+                        </button>
+
+                        <div class="submenu">
+                        <a href="catalog.html?type=movie&genre=16">
+                            <button>Мультфільми</button>
+                        </a>
+                        <a href="catalog.html?type=movie&genre=16&top=1"
+                            ><button>Топ-10</button></a
+                        >
+                        <a href="catalog.html?type=movie&genre=16&new=1"
+                            ><button>Новинки</button></a
+                        >
+                        </div>
+                    </div>
+
+                    <div class="searchBox">
+                        <input type="text" placeholder="Пошук..." id="searchInput" />
+                        <span class="searchIcon" id="searchBtn" style="cursor: pointer">🔍</span>
+                    </div>
+                    <div id="searchResults"></div>
+                    <div class="auth-section">
+                        <button class="btn-auth" id="authBtn">
+                        <span class="icon">👤</span>
+                        <span class="auth-text">Увійти</span>
+                        </button>
                     </div>
                 </div>
-            </div>
-
-            <div class="search-wrapper">
-                <div class="searchBox">
-                    <input type="text" placeholder="Пошук..." id="searchInput" />
-                    <button id="searchBtn" class="searchIconBtn">🔍</button>
-                </div>
-                <div id="searchResults"></div> </div>
-
-            <div class="auth-section">
-                <button class="btn-auth" id="authBtn">
-                    <span class="icon">👤</span>
-                    <span class="auth-text">Увійти</span>
-                </button>
-            </div>
-        </div>
+        
     </div>
 </div>

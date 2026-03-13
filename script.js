@@ -65,76 +65,44 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // --- ВИПРАВЛЕНА ЛОГІКА КЛІКІВ ТА МЕНЮ (щоб працювало з новим HTML) ---
-  // --- ВИПРАВЛЕНА ЛОГІКА КЛІКІВ (Жанри + Меню) ---
+  // --- ВИПРАВЛЕНА ЛОГІКА КЛІКІВ ДЛЯ МЕНЮ ТА ЖАНРІВ ---
   document.addEventListener("click", (e) => {
     const target = e.target;
 
-    // 1. Клік по кнопці "Жанри" (всередині підменю)
-    if (target.classList.contains("genreBtn")) {
-      e.preventDefault();
-      e.stopPropagation(); // Зупиняємо закриття батьківського меню
-      const genreMenu = target.closest(".genreMenu");
-      genreMenu.classList.toggle("active");
-      return; // Виходимо, щоб не спрацювали інші умови
+    // 1. Якщо натиснули на саму кнопку "Жанри"
+    if (target.closest(".genreBtn")) {
+        e.preventDefault();
+        e.stopPropagation(); // Зупиняємо закриття батьківського меню
+        const genreMenu = target.closest(".genreList");
+        genreMenu.classList.toggle("active");
+        return;
     }
 
-    // 2. Клік по головних кнопках (Фільми, Серіали, Мульти)
+    // 2. Якщо натиснули на головні кнопки (Фільми, Серіали, Мульти)
     const menuBtn = target.closest(".btn");
     if (menuBtn && menuBtn.closest(".menu-item")) {
-      const parent = menuBtn.closest(".menu-item");
-      
-      // Закриваємо всі інші відкриті меню, крім поточного
-      document.querySelectorAll(".menu-item").forEach(item => {
-        if (item !== parent) item.classList.remove("active");
-      });
-      
-      parent.classList.toggle("active");
-      return;
-    }
-
-    // 3. Закриття всього при кліку "повз" меню
-    if (!target.closest(".menu-item")) {
-      document.querySelectorAll(".menu-item").forEach(el => el.classList.remove("active"));
-      document.querySelectorAll(".genreMenu").forEach(el => el.classList.remove("active"));
-    }
-
-    // 4. Логіка пошуку
-    if (target.closest("#searchBtn")) {
-      performSearch();
-    }
-  });
-
-  // Функція пошуку
-  function performSearch() {
-    const input = document.getElementById("searchInput");
-    if (input && input.value.trim()) {
-      window.location.href = `catalog.html?search=${encodeURIComponent(input.value.trim())}`;
-    }
-  }
-
-  // Живий пошук (підказки)
-  let searchTimeout;
-  const searchInput = document.getElementById("searchInput");
-  searchInput?.addEventListener("input", (e) => {
-    const val = e.target.value.trim();
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(async () => {
-        const resultsBox = document.getElementById("searchResults");
-        if (!val) { 
-            resultsBox.style.display = "none"; 
-            return; 
+        const parent = menuBtn.closest(".menu-item");
+        
+        // Закриваємо всі інші відкриті меню
+        document.querySelectorAll(".menu-item").forEach(item => {
+            if (item !== parent) item.classList.remove("active");
+        });
+        
+        parent.classList.toggle("active");
+        
+        // При закритті головного меню — ховаємо і відкриті жанри
+        if (!parent.classList.contains("active")) {
+            parent.querySelectorAll(".genreMenu").forEach(gm => gm.classList.remove("active"));
         }
-        const data = await fetchData(`/search/multi?query=${encodeURIComponent(val)}`);
-        if (data.results && data.results.length > 0) {
-            resultsBox.innerHTML = data.results.slice(0, 5).map(item => `
-                <div class="search-item" onclick="location.href='details.html?id=${item.id}&type=${item.media_type || 'movie'}'">
-                    ${item.title || item.name}
-                </div>
-            `).join("");
-            resultsBox.style.display = "block";
-        }
-    }, 300);
+        return;
+    }
+
+    // 3. Закриваємо все, якщо клікнули в порожнє місце (не по меню)
+    if (!target.closest(".menu-item") && !target.closest(".genreMenu")) {
+        document.querySelectorAll(".menu-item, .genreMenu").forEach(el => {
+            el.classList.remove("active");
+        });
+    }
   });
 
   // --- Решта твого коду (Favorites, Auth UI, Loaders) ---

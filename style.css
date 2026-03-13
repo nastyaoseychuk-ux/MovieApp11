@@ -350,12 +350,6 @@ body {
 }
 
 .searchBox {
-  position: relative;
-  margin-left: 130px;
-  margin-bottom: 30px;
-}
-
-.searchBox {
   display: flex;
   align-items: center;
   background: rgba(255, 255, 255, 0.08);
@@ -363,12 +357,11 @@ body {
   border-radius: 12px;
   padding: 0 5px 0 15px;
   height: 42px;
-  width: 220px;
   transition: all 0.3s ease;
+  position: relative;
 }
 
 .searchBox:focus-within {
-  width: 280px;
   border-color: var(--primary);
   background: rgba(255, 255, 255, 0.12);
   box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
@@ -384,7 +377,6 @@ body {
 }
 
 .searchBox input:focus {
-  width: 240px;
   outline: none;
 }
 
@@ -410,6 +402,8 @@ body {
   background: var(--primary-hover);
   transform: scale(1.05);
 }
+
+
 
 #searchResults {
   position: absolute;
@@ -979,6 +973,7 @@ body {
     border: 1px solid var(--border) !important;
     border-radius: 12px !important;
     margin-right: 100px;
+    width: 150px!important;
   }
 
   .searchBox input {
@@ -990,15 +985,14 @@ body {
   .buttonHeader .btn-auth,
   .buttonHeader .submenu button,
   .buttonHeader .genreBtn {
-    width: 85%; /* Не на весь екран, щоб були поля по боках */
-    margin: 0 auto;
+    width: 300px!important; /* Не на весь екран, щоб були поля по боках */
+    text-align: center!important;
     padding: 10px 15px !important; /* Менша висота */
     font-size: 14px !important; /* Менший шрифт */
     border-radius: 10px;
     background: var(--bg-card); /* Темніший фон для кнопок */
     justify-content: start;
     border: 1px solid rgba(255, 255, 255, 0.05);
-    margin-right: 40px;
     display: flex;
   }
 
@@ -1052,3 +1046,8 @@ body {
     transform: translateY(-9.5px) rotate(-45deg);
   }
 }
+
+
+/* --- СТИЛІ ДЛЯ СПИСКУ ЖАНРІВ --- */
+
+/* Сховати список за замовчуванням */
