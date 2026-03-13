@@ -973,7 +973,7 @@ body {
     border: 1px solid var(--border) !important;
     border-radius: 12px !important;
     margin-right: 100px;
-    width: 150px!important;
+    width: 300px!important;
   }
 
   .searchBox input {
@@ -985,8 +985,7 @@ body {
   .buttonHeader .btn-auth,
   .buttonHeader .submenu button,
   .buttonHeader .genreBtn {
-    width: 300px!important; /* Не на весь екран, щоб були поля по боках */
-    text-align: center!important;
+    width: 100%; /* Не на весь екран, щоб були поля по боках */
     padding: 10px 15px !important; /* Менша висота */
     font-size: 14px !important; /* Менший шрифт */
     border-radius: 10px;
