@@ -914,6 +914,15 @@ body {
     font-size: 1.5rem;
   }
 
+.btn-more{
+  margin-bottom: 20px;
+  margin-top: -20px;
+}
+
+  .section-description{
+    display: none;
+  }
+
   .movies-container,
   .movies-container2,
   .movies-container1 {
